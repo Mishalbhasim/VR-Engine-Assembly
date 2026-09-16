@@ -10,9 +10,11 @@ public class DisassemblablePart : MonoBehaviour
     public string displayName = "Part";
 
     [Header("References")]
-    public Transform engineCenter;       // drag the root engine object here
-    public TextMeshProUGUI feedbackText; // drag your FeedbackText UI object here
-    public TextMeshProUGUI nameTag;      // leave empty for now, we'll wire this up later
+    public Transform engineCenter;
+    public TextMeshProUGUI feedbackText;
+    public TextMeshProUGUI hoverNameText;
+    public GameObject hoverNameCanvas;   // drag HoverNameCanvas here
+    public float nameTagHeightOffset = 0.15f;
 
     [Header("Animation Settings")]
     public float popDistance = 0.3f;
@@ -30,7 +32,12 @@ public class DisassemblablePart : MonoBehaviour
         grabInteractable = GetComponent<XRGrabInteractable>();
 
         if (grabInteractable != null)
+        {
             grabInteractable.enabled = false;
+            grabInteractable.selectEntered.AddListener(OnFirstGrabbed);
+            grabInteractable.hoverEntered.AddListener(OnHoverEntered);
+            grabInteractable.hoverExited.AddListener(OnHoverExited);
+        }
 
         if (simpleInteractable != null)
         {
@@ -42,23 +49,31 @@ public class DisassemblablePart : MonoBehaviour
 
     void OnHoverEntered(HoverEnterEventArgs args)
     {
-        if (nameTag != null)
+        if (hoverNameText != null) hoverNameText.text = displayName;
+        if (hoverNameCanvas != null)
         {
-            nameTag.text = displayName;
-            nameTag.gameObject.SetActive(true);
+            hoverNameCanvas.transform.position = transform.position + Vector3.up * 0.3f + (Camera.main.transform.position - transform.position).normalized * 0.15f;
+            hoverNameCanvas.SetActive(true);
         }
     }
 
     void OnHoverExited(HoverExitEventArgs args)
     {
-        if (nameTag != null)
-            nameTag.gameObject.SetActive(false);
+        if (hoverNameCanvas != null)
+            hoverNameCanvas.SetActive(false);
     }
 
     void OnSelectEntered(SelectEnterEventArgs args)
     {
+        Debug.Log("SELECT ENTERED on " + displayName);
         if (!isDetached)
             StartCoroutine(DetachRoutine());
+    }
+
+    void OnFirstGrabbed(SelectEnterEventArgs args)
+    {
+        if (rb != null && rb.isKinematic)
+            rb.isKinematic = false;
     }
 
     IEnumerator DetachRoutine()
@@ -66,7 +81,10 @@ public class DisassemblablePart : MonoBehaviour
         isDetached = true;
 
         if (feedbackText != null)
+        {
             feedbackText.text = "Removed: " + displayName;
+            feedbackText.transform.parent.gameObject.SetActive(true); // activates FeedbackBackground
+        }
 
         Vector3 startPos = transform.position;
         Vector3 direction = (transform.position - engineCenter.position).normalized;
