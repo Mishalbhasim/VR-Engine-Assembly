@@ -113,7 +113,7 @@ public class DisassemblablePart : MonoBehaviour
         // Force-release from hand if currently held
         if (grabInteractable != null && grabInteractable.isSelected)
         {
-            var interactorsCopy = new System.Collections.Generic.List<IXRSelectInteractor>(grabInteractable.interactorsSelecting);
+            var interactorsCopy = new System.Collections.Generic.List<UnityEngine.XR.Interaction.Toolkit.Interactors.IXRSelectInteractor>(grabInteractable.interactorsSelecting);
             foreach (var interactor in interactorsCopy)
             {
                 interactionManager.SelectExit(interactor, grabInteractable);
